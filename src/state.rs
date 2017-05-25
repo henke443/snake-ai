@@ -4,11 +4,9 @@ use std;
 // use time;
 // use std::process::Command;
 use nalgebra::{Point2, Vector2};
-use rand::{thread_rng, Rng};
 
-pub struct Input {
-    rotation: f64,
-}
+use input::Input;
+use input;
 
 pub struct WorldState {
     pub snakes: Vec<Snake>,
@@ -17,42 +15,43 @@ pub struct WorldState {
     pub window_rect: Vector2<u32>,
 }
 
-impl WorldState {
-    pub fn get() -> WorldState {
+impl Default for WorldState {
+    /// Gets the default world state.
+    fn default() -> WorldState {
         WorldState {
             snakes: vec![Snake::new(Point2::new(200.0, 100.0), 10, 15.0),
+                         Snake::new(Point2::new(500.0, 100.0), 30, 15.0),
+                         Snake::new(Point2::new(500.0, 100.0), 30, 15.0),
+                         Snake::new(Point2::new(500.0, 100.0), 30, 15.0),
                          Snake::new(Point2::new(500.0, 100.0), 30, 15.0)],
-            input: Input { rotation: 0.0 },
+            input: Input::default(),
             speed: 1.0,
             window_rect: Vector2::new(0, 0),
         }
     }
+}
 
-    fn get_input(&mut self) {
-        let mut rng = thread_rng();
-        let num: f64 = rng.gen_range(-0.09 * std::f64::consts::PI, 0.09 * std::f64::consts::PI);
-        self.input.rotation = num;
-    }
+impl WorldState {
+    /// Get input fetches input from the right sources.
+    fn get_input(&mut self) {}
 
     pub fn update(&mut self, args: &UpdateArgs, sync_speed: f64) {
-        // ISSUE when two snakes die at the same time.
-        // let (x, y) = (self.window_rect.x, self.window_rect.y);
 
-        self.get_input();
+        let inp = input::get(self);
 
         let speed = sync_speed * self.speed;
 
-        // let mut i = 0;
+        let mut i = 0;
         // let mut to_delete = Vec::new();
         for snake in &mut self.snakes {
             // if snake.alive {
             snake.steer(300.0 * speed * args.dt,
-                        self.input.rotation * speed,
+                        inp.snake_steering[i] * speed,
                         self.window_rect);
             // } else {
             //     to_delete.push(i);
             // }
-            // i += 1;
+            i += 1;
         }
         // for i in to_delete {
         //     if i < self.snakes.len() {

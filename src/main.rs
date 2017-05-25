@@ -17,6 +17,7 @@ use nalgebra::Vector2;
 
 mod snake;
 mod state;
+mod input;
 // use snake::*;
 
 
@@ -79,7 +80,7 @@ fn main() {
     // Create a new game and run it.
     let mut app: App = App {
         gl: GlGraphics::new(opengl),
-        world_state: state::WorldState::get(),
+        world_state: state::WorldState::default(),
         should_render: true,
         sync_speed: 1.0,
         fps: 120,
