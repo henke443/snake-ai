@@ -76,10 +76,10 @@ impl Snake {
 
         self.parts
             .push(Part {
-                      origin: Point2::new(x, y + radius * 2.0),
-                      rotation: rot,
-                      ball: Ball::new(radius),
-                  });
+                origin: Point2::new(x, y + radius * 2.0),
+                rotation: rot,
+                ball: Ball::new(radius),
+            });
     }
 
     pub fn new(p: Point2<f64>, num: i32, width: f64) -> Snake {
@@ -131,10 +131,10 @@ impl Snake {
             rot = rot % pi2;
         }
 
-        //let mut p = &mut self.parts;
+        // let mut p = &mut self.parts;
 
 
-        //TODO Check for collision
+        // TODO Check for collision
 
         self.parts[0].origin.x += rot.cos() * speed;
         self.parts[0].origin.y -= rot.sin() * speed;

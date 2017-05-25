@@ -13,12 +13,11 @@ use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
 use time::*;
-use nalgebra::{Point2, Vector2};
-use ncollide::shape::Cuboid2;
+use nalgebra::Vector2;
 
 mod snake;
 mod state;
-//use snake::*;
+// use snake::*;
 
 
 pub struct App {
@@ -50,9 +49,7 @@ impl App {
                     clear(BLACK, gl);
 
                     for snake in &world_state.snakes {
-                        if snake.alive {
-                            snake.render(&c, gl, &args);
-                        }
+                        snake.render(&c, gl, &args);
                     }
                 });
         }
@@ -108,7 +105,7 @@ fn main() {
             app.update(&u); // Fetch input and update world struct
             let end = SteadyTime::now();
 
-            let dt = (end - start);
+            let dt = end - start;
 
             let app_fps = app.fps as f64;
             let mut fps: f64 = dt.num_microseconds().unwrap() as f64;
@@ -121,14 +118,14 @@ fn main() {
                 fps = app_fps;
             }
 
-            app.sync_speed = ((app.fps as f64) / fps);
+            app.sync_speed = (app.fps as f64) / fps;
 
             let to_sleep = Duration::microseconds(1000_000 / (app.fps as i64)) - dt;
 
             if to_sleep > Duration::milliseconds(1) {
                 let result: std::time::Duration = match to_sleep.to_std() {
                     Ok(v) => v,
-                    Err(e) => std::time::Duration::new(0, 0),
+                    Err(_) => std::time::Duration::new(0, 0),
                 };
 
                 std::thread::sleep(result);
