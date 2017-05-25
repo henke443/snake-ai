@@ -18,8 +18,6 @@ use nalgebra::Vector2;
 mod snake;
 mod state;
 mod input;
-// use snake::*;
-
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -87,12 +85,7 @@ fn main() {
         window_rect: Vector2::new(width, height),
     };
 
-
-
     app.world_state.speed = 1.0;
-
-    // let mut wait_sum: f64 = 0.0;
-    // let mut wait_num: i32 = 0;
 
     let mut events = Events::new(EventSettings::new());
     while let Some(e) = events.next(&mut window) {
@@ -103,7 +96,7 @@ fn main() {
         if let Some(u) = e.update_args() {
 
             let start = SteadyTime::now();
-            app.update(&u); // Fetch input and update world struct
+            app.update(&u);
             let end = SteadyTime::now();
 
             let dt = end - start;

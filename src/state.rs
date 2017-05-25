@@ -1,8 +1,5 @@
 use snake::*;
 use piston::input::UpdateArgs;
-use std;
-// use time;
-// use std::process::Command;
 use nalgebra::{Point2, Vector2};
 
 use input::Input;
@@ -32,9 +29,6 @@ impl Default for WorldState {
 }
 
 impl WorldState {
-    /// Get input fetches input from the right sources.
-    fn get_input(&mut self) {}
-
     pub fn update(&mut self, args: &UpdateArgs, sync_speed: f64) {
 
         let inp = input::get(self);
