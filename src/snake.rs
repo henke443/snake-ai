@@ -56,14 +56,6 @@ impl Part {
     }
 }
 
-// fn follow_static(p: &mut [Part], i: usize) {
-//     let diameter = p[i].radius() * 2.0;
-//     let a = (p[i].origin.y - p[i - 1].origin.y).atan2(p[i].origin.x - p[i - 1].origin.x);
-//     p[i].origin.x = p[i - 1].origin.x + diameter * a.cos();
-//     p[i].origin.y = p[i - 1].origin.y + diameter * a.sin();
-// }
-
-
 impl Snake {
     pub fn add_part(&mut self) {
         let len = self.parts.len();

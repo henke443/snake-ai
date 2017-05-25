@@ -12,7 +12,6 @@ use piston::event_loop::*;
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
-use time::*;
 use nalgebra::Vector2;
 
 mod snake;
@@ -23,8 +22,6 @@ pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     world_state: state::WorldState,
     should_render: bool,
-    sync_speed: f64,
-    fps: u32,
     window_rect: Vector2<u32>,
 }
 
@@ -56,7 +53,7 @@ impl App {
 
     fn update(&mut self, args: &UpdateArgs) {
         self.world_state.window_rect = self.window_rect;
-        self.world_state.update(args, self.sync_speed);
+        self.world_state.update(args);
     }
 }
 
@@ -80,8 +77,6 @@ fn main() {
         gl: GlGraphics::new(opengl),
         world_state: state::WorldState::default(),
         should_render: true,
-        sync_speed: 1.0,
-        fps: 120,
         window_rect: Vector2::new(width, height),
     };
 
@@ -92,38 +87,10 @@ fn main() {
         if let Some(r) = e.render_args() {
             app.render(&r);
         }
-
         if let Some(u) = e.update_args() {
-
-            let start = SteadyTime::now();
             app.update(&u);
-            let end = SteadyTime::now();
-
-            let dt = end - start;
-
-            let app_fps = app.fps as f64;
-            let mut fps: f64 = dt.num_microseconds().unwrap() as f64;
-            if fps == 0.0 {
-                fps = app_fps;
-            } else {
-                fps = 1_000_000.0 / fps;
-            }
-            if fps > app_fps {
-                fps = app_fps;
-            }
-
-            app.sync_speed = (app.fps as f64) / fps;
-
-            let to_sleep = Duration::microseconds(1000_000 / (app.fps as i64)) - dt;
-
-            if to_sleep > Duration::milliseconds(1) {
-                let result: std::time::Duration = match to_sleep.to_std() {
-                    Ok(v) => v,
-                    Err(_) => std::time::Duration::new(0, 0),
-                };
-
-                std::thread::sleep(result);
-            }
+            // Simulate lag
+            //std::thread::sleep(std::time::Duration::new(0, 1000_000_00));
         }
     }
 }
