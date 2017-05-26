@@ -1,10 +1,9 @@
-use snake::*;
+use snake::Snake;
 use piston::input::UpdateArgs;
 use nalgebra::{Point2, Vector2};
-use time::{Duration, PreciseTime, SteadyTime};
+use time::SteadyTime;
 use input::Input;
 use input;
-use snake::Snake;
 
 
 pub struct WorldState {
@@ -42,12 +41,11 @@ impl WorldState {
 
         let speed = self.speed * self.dt;
 
-        //println!("{}", self.dt);
-
         let mut i = 0;
         for snake in &mut self.snakes {
             snake.steer(100.0 * speed,
-                        5.0 * inp.snake_steering[i] * speed, // The rotation multiplier should be lowered when the AI steers.
+                        5.0 * inp.snake_steering[i] * speed,
+                        // The rotation multiplier should be lowered when the AI steers.
                         self.window_rect);
             i += 1;
         }

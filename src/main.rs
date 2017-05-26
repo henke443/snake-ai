@@ -80,6 +80,7 @@ fn main() {
         window_rect: Vector2::new(width, height),
     };
 
+    // You should be able to change this speed without ruining the simulation.
     app.world_state.speed = 1.0;
 
     let mut events = Events::new(EventSettings::new());
@@ -88,9 +89,9 @@ fn main() {
             app.render(&r);
         }
         if let Some(u) = e.update_args() {
+            // Simulate lag:
+            // std::thread::sleep(std::time::Duration::new(0, 1000_000_00));
             app.update(&u);
-            // Simulate lag
-            //std::thread::sleep(std::time::Duration::new(0, 1000_000_00));
         }
     }
 }

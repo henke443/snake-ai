@@ -68,10 +68,10 @@ impl Snake {
 
         self.parts
             .push(Part {
-                      origin: Point2::new(x, y + radius * 2.0),
-                      rotation: rot,
-                      ball: Ball::new(radius),
-                  });
+                origin: Point2::new(x, y + radius * 2.0),
+                rotation: rot,
+                ball: Ball::new(radius),
+            });
     }
 
     pub fn new(p: Point2<f64>, num: i32, width: f64) -> Snake {
@@ -133,11 +133,11 @@ impl Snake {
         self.parts[0].origin.y -= rot.sin() * speed;
         self.parts[0].rotation = rot;
 
-        //let clamped =
+        // let clamped =
         self.parts[0].clamp_to(window);
-        //if clamped {
+        // if clamped {
         //    self.kill();
-        //}
+        //
 
         let p = &mut self.parts;
 
@@ -158,10 +158,7 @@ impl Snake {
             let mut color = [1.0, 1.0, 1.0, 1.0];
             for i in 0..parts.len() {
                 if i >= 1 {
-                    color = [1.0,
-                             1.0 / (i + 1) as f32,
-                             1.0 / ((((i + 1) as f32) / 7.0)),
-                             1.0];
+                    color = [1.0, 1.0 / (i + 1) as f32, 1.0 / ((((i + 1) as f32) / 7.0)), 1.0];
                 }
 
                 let radius = parts[i].radius();

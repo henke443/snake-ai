@@ -18,8 +18,9 @@ pub fn get(state: &WorldState) -> Input {
 
     // This should get the values from the AI module soon to be made instead
     for _ in 0..state.snakes.len() {
-        let num: f64 = rng.gen_range(-5.0, 5.0); // Should be in the range of -1 to 1 but need more because it's random.
-        //let num: f64 = -1.0;
+        let num: f64 = rng.gen_range(-5.0, 5.0);
+        // Should be in the range of -1 to 1 but need more because it's random.
+        // let num: f64 = -1.0;
         inp.snake_steering.push(num);
     }
 
