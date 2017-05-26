@@ -10,5 +10,18 @@ pistoncore-glutin_window = "0.37.0"
 piston2d-opengl_graphics = "0.43.0"
 time = "*"
 rand = "0.3"
+
+
+
+## For matrices and points
 nalgebra = "*"
+## For collision
 ncollide = "*"
+
+## Dependencies for RustNN
+rustc-serialize = "0.3.12"
+
+## Dependencies for serde_json
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"

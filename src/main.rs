@@ -6,6 +6,13 @@ extern crate time;
 extern crate rand;
 extern crate ncollide;
 extern crate nalgebra;
+extern crate rustc_serialize;
+//extern crate nn;
+
+extern crate serde;
+extern crate serde_json;
+#[macro_use] extern crate serde_derive;
+
 
 use piston::window::WindowSettings;
 use piston::event_loop::*;
@@ -18,6 +25,7 @@ mod snake;
 mod state;
 mod input;
 mod ai;
+
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
