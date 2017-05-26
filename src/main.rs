@@ -17,6 +17,7 @@ use nalgebra::Vector2;
 mod snake;
 mod state;
 mod input;
+mod ai;
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
