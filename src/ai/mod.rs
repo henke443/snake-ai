@@ -1,8 +1,8 @@
 mod senses;
 use snake::Snake;
 use state::WorldState;
-use rand::{thread_rng, Rng};
-use serde_json::{Value, Error};
+//use rand::{thread_rng, Rng};
+//use serde_json::{Value, Error};
 use serde_json;
 
 #[allow(dead_code)]
@@ -15,7 +15,8 @@ pub use self::nn::NN;
 /// the RustNN crate.
 #[derive(Serialize, Deserialize)]
 pub struct NeuralNetwork {
-    pub layers: Vec<Vec<Vec<f64>>>, // layers: [ layer: [ neuron: [ weights: [f64, ...], ...], ...] ...], ...] }
+    // layers: [ layer: [ neuron: [ weights: [f64, ...], ...], ...] ...], ...] }
+    pub layers: Vec<Vec<Vec<f64>>>,
     pub num_inputs: u32,
 }
 
@@ -30,7 +31,7 @@ pub const NN_LAYOUT: [u32; 4] = [48, 16, 16, 2];
 impl Default for DNA {
     fn default() -> DNA {
         // NN::new() starts with random weights. 48-16-16-2 network (4 layers).
-        let mut net = NN::new(&NN_LAYOUT);
+        let net = NN::new(&NN_LAYOUT);
         // convert net to json, because layers are private in the struct :/
         let json_net = net.to_json();
 
@@ -53,6 +54,7 @@ impl Default for DNA {
     }
 }
 
+#[allow(unused)]
 impl DNA {
     pub fn get(&self) -> Vec<f64> {
         let v = &self.0;
@@ -96,7 +98,7 @@ impl DNA {
 
 
 /// Gets the steering for a snake based on the snake struct reference passed in as an argument.
-/// The network has to be trained before this function can be used, or else it panics (is this true?).
+/// The snake struct needs to have a NN field initialized.
 ///
 /// #Examples
 ///
@@ -115,7 +117,6 @@ pub fn get_steering(snake: &Snake, world: &WorldState) -> f64 {
 
     let steering: f64 = right - left; // Left is negative value right is positive
 
-    //println!("call({:?})\n\n", snake.dna.0);
-
+    //let steering: f64 = 0.5;
     steering
 }

@@ -79,7 +79,8 @@ impl Snake {
                   });
     }
 
-    /// Returns a new snake with head at position `p`, tail length of `num` and tail width of `width`
+    /// Returns a new snake with head at position `p`, tail length of `num`
+    /// and tail width of `width`
     pub fn new(p: Point2<f64>, num: i32, width: f64) -> Snake {
         let mut snake = Snake {
             alive: true,

@@ -7,11 +7,12 @@ extern crate rand;
 extern crate ncollide;
 extern crate nalgebra;
 extern crate rustc_serialize;
-//extern crate nn;
+// extern crate nn;
 
 extern crate serde;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 
 
 use piston::window::WindowSettings;
@@ -92,9 +93,7 @@ fn main() {
     // You should be able to change this speed without ruining the simulation.
     app.world_state.speed = 1.0;
 
-    let mut events = Events::new(EventSettings::new())
-        .max_fps(60)
-        .ups(120);
+    let mut events = Events::new(EventSettings::new()).max_fps(60).ups(120);
 
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
