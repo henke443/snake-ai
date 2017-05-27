@@ -1,14 +1,18 @@
-extern crate piston;
-extern crate graphics;
-extern crate glutin_window;
-extern crate opengl_graphics;
+extern crate piston; // piston core
+extern crate graphics; // piston graphics
+extern crate glutin_window; // opengl context creation
+extern crate opengl_graphics; // opengl binding
+//extern crate find_folder; // for finding our assets folder.
+
 extern crate time;
 extern crate rand;
-extern crate ncollide;
-extern crate nalgebra;
-extern crate rustc_serialize;
-// extern crate nn;
 
+extern crate ncollide; // 2d/3d/nd collision detection stuff
+extern crate nalgebra; // has some neat matrices, vectors and points
+
+extern crate rustc_serialize; // for ai::nn
+
+// for json
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
@@ -16,7 +20,7 @@ extern crate serde_derive;
 
 
 use piston::window::WindowSettings;
-use piston::event_loop::*;
+use piston::event_loop::*; // Generic eventloop
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
@@ -72,15 +76,16 @@ fn main() {
     // Change this to OpenGL::V2_1 if not working.
     let opengl = OpenGL::V3_2;
 
-    let (width, height) = (800, 600);
+    let (width, height) = (1280, 720);
 
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new("Snake Game", [width, height])
         .opengl(opengl)
         .exit_on_esc(true)
+        .vsync(true)
+        //.fullscreen(true)
         .build()
         .unwrap();
-
 
     // Create a new game and run it.
     let mut app: App = App {

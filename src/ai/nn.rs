@@ -59,6 +59,7 @@ use self::HaltCondition::{Epochs, MSE, Timer};
 use self::LearningMode::Incremental;
 use std::iter::{Zip, Enumerate};
 use std::slice;
+// TODO, change rustc_serialize to serde as it has been deprecated.
 use rustc_serialize::json;
 use time::{Duration, PreciseTime};
 use rand::Rng;

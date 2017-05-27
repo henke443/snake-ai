@@ -1,9 +1,10 @@
 mod senses;
 use snake::Snake;
 use state::WorldState;
-//use rand::{thread_rng, Rng};
-//use serde_json::{Value, Error};
 use serde_json;
+
+// Unsafe function for converting from f64 to [u8; 8] and back in this case.
+use std::mem::transmute;
 
 #[allow(dead_code)]
 #[allow(unused)]
@@ -20,12 +21,12 @@ pub struct NeuralNetwork {
     pub num_inputs: u32,
 }
 
-/// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
-pub struct DNA(Vec<f64>);
-
 /// The layout of the neural network. 4 layers, 48 inputs, 32 hidden nodes and 2 outputs.
 /// The number of hidden nodes are changeable without modifying other things in the source.
 pub const NN_LAYOUT: [u32; 4] = [48, 16, 16, 2];
+
+/// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
+pub struct DNA(Vec<f64>);
 
 /// Get a DNA strand with default values.
 impl Default for DNA {
@@ -54,11 +55,73 @@ impl Default for DNA {
     }
 }
 
+
+
 #[allow(unused)]
 impl DNA {
+    /// Simple hashing algorithm called djb2 which I can use to create a color
+    /// from a DNA strand. http://www.cse.yorku.ca/~oz/hash.html
+    pub fn get_hash(&self) -> u32 {
+        // Need wrapping because hash will overflow several times.
+        use std::num::Wrapping;
+        let bytes = self.get_bytes();
+
+        let mut hash = Wrapping(5381u32);
+        for b in bytes {
+            hash = ((hash << 5) + hash) + Wrapping(b as u32); /* hash * 33 + c */
+        }
+        hash.0
+    }
+
+    /// Returns a copy of the dna vector.
     pub fn get(&self) -> Vec<f64> {
         let v = &self.0;
         v.to_vec()
+    }
+
+    /// Gets converts the dna Vec<f64> to a longer Vec<u8> and returns it.
+    pub fn get_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        for float in self.get() {
+            // Unsafe code incoming!
+            let bytes_buffer: [u8; 8] = unsafe { transmute(float) }; // or .to_le()
+            for byte in &bytes_buffer {
+                bytes.push(*byte);
+            }
+        }
+        bytes
+    }
+
+    /// Unfinished
+    pub fn from_bytes(bytes: &[u8]) -> DNA {
+        let mut dna: DNA = DNA(Vec::new());
+
+        let mut i = 0;
+        while i < bytes.len() {
+
+            let mut byte_buffer = [0u8; 8];
+            for j in 0..8 {
+                byte_buffer[j] = bytes[i + j];
+            }
+
+            let float: f64 = unsafe { transmute(byte_buffer) };
+            dna.push(float);
+
+            i += 8;
+        }
+
+        dna
+    }
+
+    /// Unfinished
+    pub fn to_color(&self) -> [f32; 4] {
+        let hash = self.get_hash();
+
+        let r: f32 = ((hash & 0xFF0000) >> 16) as f32;
+        let g: f32 = ((hash & 0x00FF00) >> 8) as f32;
+        let b: f32 = (hash & 0x0000FF) as f32;
+
+        [r / 256.0, g / 256.0, b / 256.0, 1.0]
     }
 
     pub fn set(&mut self, v: Vec<f64>) {

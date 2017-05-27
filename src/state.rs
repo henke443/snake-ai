@@ -47,7 +47,7 @@ impl WorldState {
 
         for i in 0..self.snakes.len() {
             self.snakes[i].check_collision(&self.snakes);
-            self.snakes[i].steer(256.0 * speed,
+            self.snakes[i].steer(128.0 * speed,
                                  5.0 * inputs.snake_steering[i] * speed,
                                  self.window_rect);
         }
@@ -60,7 +60,7 @@ impl WorldState {
         self.dt = args.dt;
 
         // Uncomment this and comment the things below it to enable the default time-step only.
-        self.update_values();
+        //self.update_values();
 
         // Turns out piston already implements a time step in their event_loop.
         // However, I don't think that one is very good. Either that or I don't know how to fully

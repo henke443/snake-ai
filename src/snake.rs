@@ -3,7 +3,7 @@ use opengl_graphics::GlGraphics;
 use graphics::*;
 use std;
 use nalgebra::{Point2, Vector2};
-use ncollide::shape::Ball;
+//use ncollide::shape::Ball;
 use ai::DNA;
 use ai::nn::NN;
 use ai;
@@ -13,35 +13,31 @@ pub struct Snake {
     pub parts: Vec<Part>,
     pub dna: DNA,
     pub brain: NN,
+    pub base_color: [f32; 4],
 }
 
 pub struct Part {
     origin: Point2<f64>,
-    ball: Ball<f64>,
+    //ball: Ball<f64>,
+    radius: f64,
     rotation: f64,
+    is_food: bool,
 }
 
-trait Circle {
-    fn origin(&self) -> Point2<f64>;
-    fn radius(&self) -> f64;
-    fn rotation(&self) -> f64;
-}
-
-impl Circle for Part {
-    fn rotation(&self) -> f64 {
-        self.rotation
-    }
-    fn origin(&self) -> Point2<f64> {
-        self.origin
-    }
-    fn radius(&self) -> f64 {
-        self.ball.radius()
-    }
-}
-
+#[allow(unused)]
 impl Part {
+    // pub fn rotation(&self) -> f64 {
+    //     self.rotation
+    // }
+    // pub fn origin(&self) -> Point2<f64> {
+    //     self.origin
+    // }
+    // pub fn radius(&self) -> f64 {
+    //     self.ball.radius()
+    // }
+
     pub fn clamp_to(&mut self, window: Vector2<u32>) -> bool {
-        let radius = self.radius();
+        let radius = self.radius;
         let mut clamped = false;
         if self.origin.x - radius <= 0.0 {
             self.origin.x = radius; // Correct
@@ -64,18 +60,29 @@ impl Part {
 impl Snake {
     pub fn add_part(&mut self) {
         let len = self.parts.len();
+        let last = len - 1;
 
-        let (x, y) = (self.parts[len - 1].origin.x, self.parts[len - 1].origin.y);
+        // If the last part of snake is food, make it not food.
+        if self.parts[last].is_food {
+            self.parts[last].is_food = false;
+            self.parts[last].radius = self.parts[last - 1].radius /* Inherit the radius
+                                                                   from previous part */
+        }
 
-        let rot = self.parts[len - 1].rotation();
+        let (x, y) = (self.parts[last].origin.x, self.parts[last].origin.y);
 
-        let radius = self.parts[len - 1].radius(); //self.parts[len - 1].radius();
+        let rot = self.parts[last].rotation;
+
+        // Food as twice the radius. And this part which we add now is food because
+        // it's the last part.
+        let radius = self.parts[last].radius * 2.0;
 
         self.parts
             .push(Part {
                       origin: Point2::new(x, y + radius * 2.0),
                       rotation: rot,
-                      ball: Ball::new(radius),
+                      radius: radius,
+                      is_food: true,
                   });
     }
 
@@ -87,12 +94,23 @@ impl Snake {
             parts: vec![Part {
                             origin: Point2::new(p.x, p.y + width),
                             rotation: 0.0,
-                            ball: Ball::new(width / 2.0),
+                            radius: width / 2.0,
+                            is_food: false, // Head is not food.
                         }],
             dna: DNA::default(),
             brain: NN::new(&ai::NN_LAYOUT),
+            base_color: [1f32; 4],
         };
 
+        snake.base_color = snake.dna.to_color();
+
+        //let bytes = snake.dna.get_bytes();
+        let hash = snake.dna.get_hash();
+
+        //print!("DNA Bytes: {:?}\n\n", bytes);
+        print!("DNA Hash: {:?}\nColor: {:?}\n\n____________________\n",
+               hash,
+               snake.base_color);
         for _ in 1..num {
             snake.add_part();
         }
@@ -139,14 +157,20 @@ impl Snake {
 
         let p = &mut self.parts;
 
-
         // For each part that is not the head
         for i in 1..p.len() {
-            let diameter = p[i].radius() * 2.0;
+            let mut diameter = p[i].radius * 2.0;
+            if i == p.len() - 1 {
+                // If last element, being food and having larger radius.
+                diameter = p[i].radius * 1.5; // dirty fix for it floating behind other parts.
+                // TODO, find mathematical relation between factor here and food radius Serialize
+                // use that.
+            }
             let a = (p[i].origin.y - p[i - 1].origin.y).atan2(p[i].origin.x - p[i - 1].origin.x);
             p[i].origin.x = p[i - 1].origin.x + diameter * a.cos();
             p[i].origin.y = p[i - 1].origin.y + diameter * a.sin();
         }
+
     }
 
     pub fn check_collision(&self, snakes: &[Snake]) {
@@ -165,17 +189,33 @@ impl Snake {
     #[allow(unused_variables)]
     pub fn render(&self, c: &context::Context, gl: &mut GlGraphics, args: &RenderArgs) {
         let parts = &self.parts;
-        if parts.len() > 0 {
-            let mut color = [1.0, 1.0, 1.0, 1.0];
-            for i in 0..parts.len() {
-                if i >= 1 {
-                    color = [1.0,
-                             1.0 / (i + 1) as f32,
-                             1.0 / ((((i + 1) as f32) / 7.0)),
-                             1.0];
-                }
 
-                let radius = parts[i].radius();
+        if parts.len() > 0 {
+            let food_color = [1.0, 0.2, 0.2, 0.5];
+            let base_color = self.base_color;
+            let mut color = [1.0; 4];
+
+            let mut rotation = -0.3 * std::f64::consts::PI;
+            let rot_inc = std::f64::consts::PI * 0.0375; //pi/16 * 0.6
+            for i in 0..16 {
+                let ray = [0.0, 0.0, 300.0, 5.0];
+                let ray_transform = c.transform
+                    .trans(parts[0].origin.x, parts[0].origin.y)
+                    .rot_rad(-parts[0].rotation + rotation);
+
+                rectangle([1.0, 1.0, 1.0, 0.2], ray, ray_transform, gl);
+
+                rotation += rot_inc;
+            }
+
+            let len = parts.len();
+            for i in 0..len {
+                if i == 1 {
+                    color = base_color;
+                } else if i == len - 1 {
+                    color = food_color;
+                }
+                let radius = parts[i].radius;
                 let square = [0.0, 0.0, radius * 2.0, radius * 2.0];
 
                 let (x, y) = (parts[i].origin.x, parts[i].origin.y);
