@@ -12,7 +12,6 @@ time = "*"
 rand = "0.3"
 
 
-
 ## For matrices and points
 nalgebra = "*"
 ## For collision

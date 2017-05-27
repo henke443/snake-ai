@@ -115,10 +115,6 @@ pub fn get_steering(snake: &Snake, world: &WorldState) -> f64 {
 
     let steering: f64 = right - left; // Left is negative value right is positive
 
-    // let mut rng = thread_rng();
-    // // Should be in the range of -1 to 1 but need more because it's random.
-    // let steering: f64 = rng.gen_range(-5.0, 5.0);
-
     //println!("call({:?})\n\n", snake.dna.0);
 
     steering

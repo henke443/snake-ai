@@ -92,7 +92,10 @@ fn main() {
     // You should be able to change this speed without ruining the simulation.
     app.world_state.speed = 1.0;
 
-    let mut events = Events::new(EventSettings::new());
+    let mut events = Events::new(EventSettings::new())
+        .max_fps(60)
+        .ups(120);
+
     while let Some(e) = events.next(&mut window) {
         if let Some(r) = e.render_args() {
             app.render(&r);

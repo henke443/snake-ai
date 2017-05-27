@@ -43,8 +43,8 @@ impl WorldState {
 
         for i in 0..self.snakes.len() {
             self.snakes[i].check_collision(&self.snakes);
-            self.snakes[i].steer(100.0 * speed,
-                                 5.0 * inputs.snake_steering[i] * speed,
+            self.snakes[i].steer(200.0 * speed,
+                                 10.0 * inputs.snake_steering[i] * speed,
                                  self.window_rect);
         }
     }
@@ -53,20 +53,22 @@ impl WorldState {
     /// fps you will still hopefully (maybe) get the same behavior.
     /// I need to revisit this to see if it's the optimal approach...
     pub fn update(&mut self, args: &UpdateArgs) {
-
         self.dt = args.dt;
 
-        //self.update_values();
+        self.update_values();
 
-        let new_time = SteadyTime::now();
-        let frame_time = ((new_time - self.current_time).num_microseconds().unwrap() as f64) /
-                         1000_000.0;
-        self.current_time = new_time;
-        self.accumulator += frame_time;
-
-        while self.accumulator >= self.dt {
-            self.update_values();
-            self.accumulator -= self.dt;
-        }
+        // Turns out piston already implements a time step in their event_loop.
+        // However, I don't think that one is very good, or I don't know how to fully us eit.
+        // The result being that the animation is something choppy... should fix this soon.
+        // let new_time = SteadyTime::now();
+        // let frame_time = ((new_time - self.current_time).num_microseconds().unwrap() as f64) /
+        //                  1000_000.0;
+        // self.current_time = new_time;
+        // self.accumulator += frame_time;
+        //
+        // while self.accumulator >= self.dt {
+        //     self.update_values();
+        //     self.accumulator -= self.dt;
+        // }
     }
 }
