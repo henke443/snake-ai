@@ -3,10 +3,16 @@ use opengl_graphics::GlGraphics;
 use graphics::*;
 use std;
 use nalgebra::{Point2, Vector2};
-//use ncollide::shape::Ball;
+use state::WorldState;
 use ai::DNA;
 use ai::nn::NN;
 use ai;
+use time::SteadyTime;
+use rand;
+use rand::Rng;
+use rand::distributions::{IndependentSample, Range};
+
+
 
 pub struct Snake {
     pub alive: bool,
@@ -14,28 +20,19 @@ pub struct Snake {
     pub dna: DNA,
     pub brain: NN,
     pub base_color: [f32; 4],
+    pub score: u32,
+    pub last_eaten: SteadyTime,
 }
 
 pub struct Part {
-    origin: Point2<f64>,
-    //ball: Ball<f64>,
-    radius: f64,
-    rotation: f64,
-    is_food: bool,
+    pub origin: Point2<f64>,
+    pub radius: f64,
+    pub rotation: f64,
+    pub is_food: bool,
 }
 
 #[allow(unused)]
 impl Part {
-    // pub fn rotation(&self) -> f64 {
-    //     self.rotation
-    // }
-    // pub fn origin(&self) -> Point2<f64> {
-    //     self.origin
-    // }
-    // pub fn radius(&self) -> f64 {
-    //     self.ball.radius()
-    // }
-
     pub fn clamp_to(&mut self, window: Vector2<u32>) -> bool {
         let radius = self.radius;
         let mut clamped = false;
@@ -65,8 +62,7 @@ impl Snake {
         // If the last part of snake is food, make it not food.
         if self.parts[last].is_food {
             self.parts[last].is_food = false;
-            self.parts[last].radius = self.parts[last - 1].radius /* Inherit the radius
-                                                                   from previous part */
+            self.parts[last].radius = self.parts[last - 1].radius // Inherit the radius
         }
 
         let (x, y) = (self.parts[last].origin.x, self.parts[last].origin.y);
@@ -79,7 +75,7 @@ impl Snake {
 
         self.parts
             .push(Part {
-                      origin: Point2::new(x, y + radius * 2.0),
+                      origin: Point2::new(x, y + radius),
                       rotation: rot,
                       radius: radius,
                       is_food: true,
@@ -100,17 +96,12 @@ impl Snake {
             dna: DNA::default(),
             brain: NN::new(&ai::NN_LAYOUT),
             base_color: [1f32; 4],
+            score: 0,
+            last_eaten: SteadyTime::now(),
         };
 
         snake.base_color = snake.dna.to_color();
 
-        //let bytes = snake.dna.get_bytes();
-        let hash = snake.dna.get_hash();
-
-        //print!("DNA Bytes: {:?}\n\n", bytes);
-        print!("DNA Hash: {:?}\nColor: {:?}\n\n____________________\n",
-               hash,
-               snake.base_color);
         for _ in 1..num {
             snake.add_part();
         }
@@ -173,17 +164,29 @@ impl Snake {
 
     }
 
-    pub fn check_collision(&self, snakes: &[Snake]) {
-        let head_pos = self.parts[0].origin;
+    /// if 'self' has eaten some snake in 'snakes', return the index of that snake.
+    pub fn has_eaten<'a>(&self, snakes: &'a [Snake]) -> Option<usize> {
+        let head = self.parts[0].origin;
+
+        let mut i = 0;
         for snake in snakes {
-            if head_pos != snake.parts[0].origin {
-                for i in 0..snake.parts.len() {
-                    if snake.parts[i].origin == head_pos {
-                        println!("Collision")
+            if snake.parts[0].origin != self.parts[0].origin {
+                // Dirty check
+                for part in &snake.parts {
+                    if part.is_food {
+                        // If head is colliding with food
+                        if (head.x - part.origin.x).powi(2) + (head.y - part.origin.y).powi(2) <=
+                           (self.parts[0].radius + part.radius).powi(2) {
+                            // Return snake that has been eaten
+                            return Some(i);
+                        }
                     }
                 }
             }
+            i += 1;
         }
+
+        None
     }
 
     #[allow(unused_variables)]
@@ -193,20 +196,21 @@ impl Snake {
         if parts.len() > 0 {
             let food_color = [1.0, 0.2, 0.2, 0.5];
             let base_color = self.base_color;
-            let mut color = [1.0; 4];
+            let mut color = [1.0, 1.0, 1.0, 1.0];
 
-            let mut rotation = -0.3 * std::f64::consts::PI;
-            let rot_inc = std::f64::consts::PI * 0.0375; //pi/16 * 0.6
-            for i in 0..16 {
-                let ray = [0.0, 0.0, 300.0, 5.0];
-                let ray_transform = c.transform
-                    .trans(parts[0].origin.x, parts[0].origin.y)
-                    .rot_rad(-parts[0].rotation + rotation);
-
-                rectangle([1.0, 1.0, 1.0, 0.2], ray, ray_transform, gl);
-
-                rotation += rot_inc;
-            }
+            // Rough emulation of vision.
+            // let mut rotation = -0.3 * std::f64::consts::PI;
+            // let rot_inc = std::f64::consts::PI * 0.0375; //pi/16 * 0.6
+            // for i in 0..16 {
+            //     let ray = [0.0, 0.0, 500.0, 2.0];
+            //     let ray_transform = c.transform
+            //         .trans(parts[0].origin.x, parts[0].origin.y)
+            //         .rot_rad(-parts[0].rotation + rotation);
+            //
+            //     rectangle([1.0, 1.0, 1.0, 0.2], ray, ray_transform, gl);
+            //
+            //     rotation += rot_inc;
+            // }
 
             let len = parts.len();
             for i in 0..len {
@@ -228,6 +232,15 @@ impl Snake {
 
 impl Default for Snake {
     fn default() -> Snake {
-        Snake::new(Point2::new(50.0, 50.0), 5, 50.0)
+        Snake::new(Point2::new(50.0, 50.0), 2, 50.0)
     }
+}
+
+pub fn random_within(window: Vector2<u32>) -> Point2<f64> {
+    let mut rng = rand::thread_rng();
+    let rx = Range::new(0, window[0]);
+    let ry = Range::new(0, window[1]);
+
+    Point2::new(rx.ind_sample(&mut rng) as f64,
+                ry.ind_sample(&mut rng) as f64)
 }

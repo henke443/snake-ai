@@ -24,7 +24,7 @@ use piston::event_loop::*; // Generic eventloop
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
-use nalgebra::Vector2;
+use nalgebra::{Vector2, Point2};
 
 mod snake;
 mod state;
@@ -79,7 +79,7 @@ fn main() {
     let (width, height) = (1280, 720);
 
     // Create an Glutin window.
-    let mut window: Window = WindowSettings::new("Snake Game", [width, height])
+    let mut window: Window = WindowSettings::new("Snake Game",[width, height])
         .opengl(opengl)
         .exit_on_esc(true)
         .vsync(true)
@@ -96,8 +96,15 @@ fn main() {
     };
 
     // You should be able to change this speed without ruining the simulation.
-    app.world_state.speed = 1.0;
+    app.world_state.speed = 5.0;
 
+    // Add 10 snakes.
+    for _ in 0..10 {
+        let snake = snake::Snake::new(snake::random_within(app.window_rect), 2, 15.0);
+        app.world_state.snakes.push(snake);
+    }
+
+    //default: .max_fps(60).ups(120)
     let mut events = Events::new(EventSettings::new()).max_fps(60).ups(120);
 
     while let Some(e) = events.next(&mut window) {

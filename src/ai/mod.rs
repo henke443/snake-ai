@@ -1,4 +1,5 @@
 mod senses;
+pub mod genetics;
 use snake::Snake;
 use state::WorldState;
 use serde_json;
@@ -23,7 +24,7 @@ pub struct NeuralNetwork {
 
 /// The layout of the neural network. 4 layers, 48 inputs, 32 hidden nodes and 2 outputs.
 /// The number of hidden nodes are changeable without modifying other things in the source.
-pub const NN_LAYOUT: [u32; 4] = [48, 16, 16, 2];
+pub const NN_LAYOUT: [u32; 4] = [48, 32, 32, 2];
 
 /// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
 pub struct DNA(Vec<f64>);
@@ -39,9 +40,6 @@ impl Default for DNA {
         let mut dna: DNA = DNA(Vec::new());
 
         let v: NeuralNetwork = serde_json::from_str(&json_net).unwrap();
-
-        // put a println on the json_net and a std::thread:sleep if you want to see how the
-        // json structure looks.
 
         for layer in v.layers {
             for neuron in layer {
@@ -79,7 +77,7 @@ impl DNA {
         v.to_vec()
     }
 
-    /// Gets converts the dna Vec<f64> to a longer Vec<u8> and returns it.
+    /// Converts the dna Vec<f64> to a longer Vec<u8> and returns it.
     pub fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
         for float in self.get() {
@@ -92,7 +90,7 @@ impl DNA {
         bytes
     }
 
-    /// Unfinished
+    /// Creates DNA from bytes instead of Vec<f64> and returns it.
     pub fn from_bytes(bytes: &[u8]) -> DNA {
         let mut dna: DNA = DNA(Vec::new());
 
@@ -113,7 +111,7 @@ impl DNA {
         dna
     }
 
-    /// Unfinished
+    /// Gets color for dna based on the `get_hash()` function.
     pub fn to_color(&self) -> [f32; 4] {
         let hash = self.get_hash();
 
@@ -132,25 +130,46 @@ impl DNA {
         self.0.push(v);
     }
 
+    /// Unfinished. TODO: Optimize, generalize and tidy up this ABSOLUTE SHIET.
     pub fn to_network(&self) -> NN {
+
         let mut network = NN::new(&NN_LAYOUT);
 
-        let layers: Vec<Vec<Vec<f64>>> = Vec::new();
-        let neurons: Vec<Vec<f64>> = Vec::new();
-        let mut weights: Vec<f64> = Vec::new();
-
-        for weight in &self.0 {
-            weights.push(*weight);
+        // push 49 weights to a neuron, then push neuron to layer1,  31 times.
+        let mut layer1 = Vec::new();
+        for b in 0..32 {
+            let mut neuron = Vec::new();
+            for i in (b * 49)..(b * 49 + 49) {
+                neuron.push(self.0[i]);
+            }
+            layer1.push(neuron);
         }
 
-        // for i in &NN_LAYOUT {
-        //     for j in 0..NN_LAYOUT[i] { // For each neuron
-        //         for h in 0..4 {// For each weight in said neuron
-        //         neuron.push(weights[j]) // Push weight
-        //     }
-        // }
+        let mut layer2 = Vec::new();
+        // Where last loop stopped, this is hell.
+        let mut previ = 31 * 49 + 49;
+        for b in 0..32 {
+            let mut neuron = Vec::new();
+            for i in previ + (b * 33)..previ + (b * 33 + 33) {
+                neuron.push(self.0[i]);
+            }
+            layer2.push(neuron);
+        }
 
-        let num_inputs = NN_LAYOUT[NN_LAYOUT.len() - 1];
+        previ = previ + (31 * 33 + 33);
+
+        let mut layer3 = Vec::new();
+        for b in 0..2 {
+            let mut neuron = Vec::new();
+            for i in previ + (b * 33)..previ + (b * 33 + 33) {
+                neuron.push(self.0[i]);
+            }
+            layer3.push(neuron);
+        }
+
+        let layers = vec![layer1, layer2, layer3];
+
+        let num_inputs = NN_LAYOUT[0];
 
         network.layers = layers;
         network.num_inputs = num_inputs;

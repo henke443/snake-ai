@@ -1,9 +1,11 @@
 use snake::Snake;
+use snake;
 use piston::input::UpdateArgs;
 use nalgebra::{Point2, Vector2};
 use time::SteadyTime;
 use input::Inputs;
 use input;
+use ai;
 
 
 pub struct WorldState {
@@ -12,6 +14,7 @@ pub struct WorldState {
     pub speed: f64,
     pub window_rect: Vector2<u32>,
     pub dt: f64,
+    pub global_best_score: u32,
 
     // For the time-step (piston already has one but I layered this on top.)
     current_time: SteadyTime,
@@ -22,19 +25,15 @@ impl Default for WorldState {
     /// Gets the default world state.
     fn default() -> WorldState {
         WorldState {
-            snakes: vec![Snake::new(Point2::new(200.0, 100.0), 10, 20.0),
-                         Snake::new(Point2::new(500.0, 100.0), 3, 20.0),
-                         Snake::new(Point2::new(400.0, 100.0), 5, 20.0),
-                         Snake::new(Point2::new(100.0, 100.0), 7, 20.0),
-                         Snake::new(Point2::new(450.0, 100.0), 8, 20.0)],
+            snakes: Vec::new(),
             inputs: Inputs::default(),
             speed: 1.0,
             dt: 0.01,
             window_rect: Vector2::new(0, 0),
-
             // for the time-step
             current_time: SteadyTime::now(),
             accumulator: 0.0,
+            global_best_score: 0,
         }
     }
 }
@@ -45,11 +44,69 @@ impl WorldState {
 
         let speed = self.speed * self.dt;
 
+
+        let mut to_kill = Vec::new();
+
         for i in 0..self.snakes.len() {
-            self.snakes[i].check_collision(&self.snakes);
-            self.snakes[i].steer(128.0 * speed,
-                                 5.0 * inputs.snake_steering[i] * speed,
+
+            let now = SteadyTime::now();
+            let time_since_eaten = (now - self.snakes[i].last_eaten).num_seconds();
+            if time_since_eaten > 6 {
+                println!("{} died of starvation", self.snakes[i].dna.get_hash());
+                to_kill.push(i);
+            }
+
+            if let Some(eaten) = self.snakes[i].has_eaten(&self.snakes) {
+                self.snakes[i].last_eaten = SteadyTime::now();
+                self.snakes[i].add_part();
+                self.snakes[i].score += 1;
+
+                to_kill.push(eaten);
+
+                println!("{:X} has eaten {:X} and now has score: {}!",
+                         self.snakes[i].dna.get_hash(),
+                         self.snakes[eaten].dna.get_hash(),
+                         self.snakes[i].score);
+            }
+
+            self.snakes[i].steer(50.0 * speed,
+                                 2.5 * inputs.snake_steering[i] * speed,
                                  self.window_rect);
+        }
+        for i in to_kill {
+            self.snakes.remove(i);
+
+            // Get two best snakes
+            if self.snakes.len() < 2 {
+                panic!("There's less than two snakes, can't breed!");
+            }
+
+            let mut max = 0;
+            let mut second_max = 0;
+            let mut best: usize = 0;
+            let mut second_best: usize = 0;
+
+            for (i, snake) in self.snakes.iter().enumerate() {
+                if snake.score > max {
+                    max = snake.score;
+                    best = i;
+
+                } else if snake.score > second_max {
+                    second_max = snake.score;
+                    second_best = i;
+                }
+            }
+
+            if max > self.global_best_score {
+                self.global_best_score = max;
+            }
+
+            println!("Best alive: {}", max);
+            println!("Global best: {}", self.global_best_score);
+
+            let mut child = ai::genetics::breed(&self.snakes[best], &self.snakes[second_best]);
+            child.parts[0].origin = snake::random_within(self.window_rect);
+            self.snakes.push(child);
         }
     }
 
