@@ -57,7 +57,7 @@ fn cast_ray(snake: &Snake,
             world: &WorldState,
             rotation: &f64,
             head_point: &Point2<f64>)
-            -> [f64; 3] {
+            -> [f64; 2] {
     // Get a point on a circle, in this case a point on a circle with radius 1.0
     // around our head origin rotated by the head rotation; aka our unit vector for the ray.
     let dir_x = head_point.x + 1.0 * rotation.cos(); // 1.0 being the radius
@@ -70,7 +70,7 @@ fn cast_ray(snake: &Snake,
     // Each ray makes 3 float values, for each visible object.
     // Rays can pass through objects so need to make a vector of hits and
     // then only use the one that is closest to to the snake.
-    let mut snake_hits = Vec::new();
+    //let mut snake_hits = Vec::new();
     let mut food_hits = Vec::new();
     let mut wall_hit = -1.0f64; // Cant hit several walls so wont need to check.
 
@@ -100,7 +100,7 @@ fn cast_ray(snake: &Snake,
                 // gets time of impact of ray to ball with transform ball_transform
                 // if ray doesn't hit ball, it returns None.
                 if let Some(toi) = ball.toi_with_ray(&ball_transform, &ray, true) {
-                    snake_hits.push(toi);
+                    //snake_hits.push(toi);
                     if part.is_food {
                         food_hits.push(toi);
                     }
@@ -112,16 +112,16 @@ fn cast_ray(snake: &Snake,
     // Find smallest toi's in hits and use those,
     // preventing snake to have x-ray vision.
     // A value of 2.0 should be treated as -1, a value of 0 should be treated as 1
-    let mut snake_hit = -1.0;
-    if !snake_hits.is_empty() {
-        // if toi is 0, snake_hit is 1, if toi is 1, snake_hit is 0;
-        snake_hit = 1.0 - min_val(snake_hits);
-    }
+    // let mut snake_hit = -1.0;
+    // if !snake_hits.is_empty() {
+    //     // if toi is 0, snake_hit is 1, if toi is 1, snake_hit is 0;
+    //     snake_hit = 1.0 - min_val(snake_hits);
+    // }
 
     let mut food_hit = -1.0;
     if !food_hits.is_empty() {
         food_hit = 1.0 - min_val(food_hits);
     }
 
-    [food_hit, snake_hit, wall_hit]
+    [food_hit, wall_hit] //snake_hit]
 }

@@ -22,9 +22,9 @@ pub struct NeuralNetwork {
     pub num_inputs: u32,
 }
 
-/// The layout of the neural network. 4 layers, 48 inputs, 32 hidden nodes and 2 outputs.
-/// The number of hidden nodes are changeable without modifying other things in the source.
-pub const NN_LAYOUT: [u32; 5] = [48, 16, 16, 8, 2];
+/// The layout of the neural can change and insert more or less hidden nodes but dont change
+/// the 48 and the 2 in the ends, these are input and output nodes.
+pub const NN_LAYOUT: [u32; 3] = [32, 16, 2];
 
 /// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
 pub struct DNA(Vec<f64>);
@@ -32,7 +32,6 @@ pub struct DNA(Vec<f64>);
 /// Get a DNA strand with default values.
 impl Default for DNA {
     fn default() -> DNA {
-        // NN::new() starts with random weights. 48-16-16-2 network (4 layers).
         let net = NN::new(&NN_LAYOUT);
         // convert net to json, because layers are private in the struct :/
         let json_net = net.to_json();

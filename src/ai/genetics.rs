@@ -100,7 +100,7 @@ pub fn mutate_dna(dna: &mut DNA, mutate_rate: f32) {
         }
     }
 
-    //println!("{}/{} weights mutated", num_mutations, dna.0.len());
+    println!("{}/{} weights mutated", num_mutations, dna.0.len());
 }
 
 // TODO optimize this
