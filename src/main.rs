@@ -98,11 +98,11 @@ fn main() {
     };
 
     // You can change these
-    app.world_state.speed = 2.0;
-    app.world_state.starve_time = 6; // In seconds
+    app.world_state.speed = 1.5;
+    app.world_state.starve_time = 3; // In seconds
 
     // Add 10 snakes. with default length 2 and width 10, change these too.
-    for _ in 0..10 {
+    for _ in 0..15 {
         let snake = snake::Snake::new(snake::random_within(app.window_rect), 2, 8.0);
         app.world_state.snakes.push(snake);
     }
