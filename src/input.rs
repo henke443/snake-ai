@@ -32,5 +32,7 @@ pub fn get(world: &WorldState) -> Inputs {
         inputs.snake_steering.push(steering);
     }
 
+    //println!("{:?}", inputs.snake_steering);
+
     inputs
 }

@@ -9,9 +9,12 @@ use ai::nn::NN;
 use ai;
 use time::SteadyTime;
 use rand;
-use rand::Rng;
-use rand::distributions::{IndependentSample, Range};
+use food::Food;
+use geometry::Circle;
+use geometry;
+//use rand::Rng;
 
+use rand::distributions::{IndependentSample, Range};
 
 
 pub struct Snake {
@@ -29,6 +32,15 @@ pub struct Part {
     pub radius: f64,
     pub rotation: f64,
     pub is_food: bool,
+}
+
+impl Circle for Part {
+    fn origin(&self) -> Point2<f64> {
+        self.origin
+    }
+    fn radius(&self) -> f64 {
+        self.radius
+    }
 }
 
 #[allow(unused)]
@@ -55,6 +67,12 @@ impl Part {
 }
 
 impl Snake {
+    pub fn set_pos(&mut self, p: Point2<f64>) {
+        for part in self.parts.iter_mut() {
+            part.origin = Point2::new(p.x, p.y); //+ part.radius * (i as f64));
+        }
+    }
+
     pub fn add_part(&mut self) {
         let len = self.parts.len();
         let last = len - 1;
@@ -109,10 +127,10 @@ impl Snake {
         snake
     }
 
-    #[allow(unused)]
-    pub fn kill(&mut self) {
-        self.alive = false;
-    }
+    // #[allow(unused)]
+    // pub fn kill(&mut self) {
+    //     self.alive = false;
+    // }
 
     /// Steer snake.
     /// Rotation is in radians in the range -.5pi to .5pi and is oriented to the head
@@ -125,7 +143,13 @@ impl Snake {
         }
 
         self.parts[0].rotation = rot;
+        let old_p = self.parts[0].origin;
         self.mov_add(speed, rot, window);
+
+        if format!("{}", self.parts[0].origin.x) == "NaN" {
+            println!("Rotation was: {}, _rot was: {}", rot, _rot);
+            panic!("Was {} now is {}", old_p.x, self.parts[0].origin.y);
+        }
     }
 
     /// mov_add adds movement in a direction based on speed (length of added movement)
@@ -165,25 +189,19 @@ impl Snake {
     }
 
     /// if 'self' has eaten some snake in 'snakes', return the index of that snake.
-    pub fn has_eaten<'a>(&self, snakes: &'a [Snake]) -> Option<usize> {
-        let head = self.parts[0].origin;
+    pub fn has_eaten<'a>(&self, world: &WorldState) -> Option<usize> {
 
-        let mut i = 0;
-        for snake in snakes {
+        for (i, snake) in world.snakes.iter().enumerate() {
             if snake.parts[0].origin != self.parts[0].origin {
-                // Dirty check
+                // Dirty
                 for part in &snake.parts {
                     if part.is_food {
-                        // If head is colliding with food
-                        if (head.x - part.origin.x).powi(2) + (head.y - part.origin.y).powi(2) <=
-                           (self.parts[0].radius + part.radius).powi(2) {
-                            // Return snake that has been eaten
+                        if geometry::collision(&self.parts[0], part) {
                             return Some(i);
                         }
                     }
                 }
             }
-            i += 1;
         }
 
         None
@@ -226,6 +244,8 @@ impl Snake {
                 let transform = c.transform.trans(x - radius, y - radius);
                 ellipse(color, square, transform, gl);
             }
+        } else {
+            panic!("parts.len() was < 1");
         }
     }
 }
@@ -236,10 +256,11 @@ impl Default for Snake {
     }
 }
 
+/// Generates a random Point2<f64> within a window, or other Vector2<u32>
 pub fn random_within(window: Vector2<u32>) -> Point2<f64> {
     let mut rng = rand::thread_rng();
-    let rx = Range::new(0, window[0]);
-    let ry = Range::new(0, window[1]);
+    let rx = Range::new(1.0, window[0] as f32 - 1.0);
+    let ry = Range::new(1.0, window[1] as f32 - 1.0);
 
     Point2::new(rx.ind_sample(&mut rng) as f64,
                 ry.ind_sample(&mut rng) as f64)

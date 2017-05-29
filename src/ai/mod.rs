@@ -24,7 +24,7 @@ pub struct NeuralNetwork {
 
 /// The layout of the neural network. 4 layers, 48 inputs, 32 hidden nodes and 2 outputs.
 /// The number of hidden nodes are changeable without modifying other things in the source.
-pub const NN_LAYOUT: [u32; 4] = [48, 32, 32, 2];
+pub const NN_LAYOUT: [u32; 5] = [48, 16, 16, 8, 2];
 
 /// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
 pub struct DNA(Vec<f64>);
@@ -102,7 +102,13 @@ impl DNA {
                 byte_buffer[j] = bytes[i + j];
             }
 
-            let float: f64 = unsafe { transmute(byte_buffer) };
+            let mut float: f64 = unsafe { transmute(byte_buffer) };
+
+            if float != float {
+                // Float is NaN because of mutation
+                panic!("Float was NaN");
+            }
+
             dna.push(float);
 
             i += 8;
@@ -130,44 +136,27 @@ impl DNA {
         self.0.push(v);
     }
 
-    /// Unfinished. TODO: Optimize, generalize and tidy up this ABSOLUTE SHIET.
+    /// Unfinished.
     pub fn to_network(&self) -> NN {
 
         let mut network = NN::new(&NN_LAYOUT);
 
-        // push 49 weights to a neuron, then push neuron to layer1,  31 times.
-        let mut layer1 = Vec::new();
-        for b in 0..32 {
-            let mut neuron = Vec::new();
-            for i in (b * 49)..(b * 49 + 49) {
-                neuron.push(self.0[i]);
+        let mut layers = Vec::new();
+
+        // This loop is hard to understand :/ Wrote it in a caffeinated rampage.
+        // Think its correct though.
+        for i in 1..NN_LAYOUT.len() {
+            let mut layer = Vec::new();
+            for b in 0..NN_LAYOUT[i] {
+                let mut neuron = Vec::new();
+                let prev_num_inc = NN_LAYOUT[i - 1] + 1;
+                for j in (b * prev_num_inc)..(b * prev_num_inc + prev_num_inc) {
+                    neuron.push(self.0[j as usize]);
+                }
+                layer.push(neuron);
             }
-            layer1.push(neuron);
+            layers.push(layer);
         }
-
-        let mut layer2 = Vec::new();
-        // Where last loop stopped, this is hell.
-        let mut previ = 31 * 49 + 49;
-        for b in 0..32 {
-            let mut neuron = Vec::new();
-            for i in previ + (b * 33)..previ + (b * 33 + 33) {
-                neuron.push(self.0[i]);
-            }
-            layer2.push(neuron);
-        }
-
-        previ = previ + (31 * 33 + 33);
-
-        let mut layer3 = Vec::new();
-        for b in 0..2 {
-            let mut neuron = Vec::new();
-            for i in previ + (b * 33)..previ + (b * 33 + 33) {
-                neuron.push(self.0[i]);
-            }
-            layer3.push(neuron);
-        }
-
-        let layers = vec![layer1, layer2, layer3];
 
         let num_inputs = NN_LAYOUT[0];
 
@@ -198,6 +187,13 @@ pub fn get_steering(snake: &Snake, world: &WorldState) -> f64 {
     let right = results[1];
 
     let steering: f64 = right - left; // Left is negative value right is positive
+
+    if format!("{}", steering) == "NaN" {
+        panic!("Steering was NaN\nleft:{}, right:{}\n senses: {:?}",
+               left,
+               right,
+               senses);
+    }
 
     //let steering: f64 = 0.5;
     steering

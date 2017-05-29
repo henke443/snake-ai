@@ -30,6 +30,8 @@ mod snake;
 mod state;
 mod input;
 mod ai;
+mod food;
+mod geometry;
 
 
 pub struct App {
@@ -79,11 +81,11 @@ fn main() {
     let (width, height) = (1280, 720);
 
     // Create an Glutin window.
-    let mut window: Window = WindowSettings::new("Snake Game",[width, height])
+    let mut window: Window = WindowSettings::new("Snake Game", [width, height])
         .opengl(opengl)
         .exit_on_esc(true)
         .vsync(true)
-        //.fullscreen(true)
+        .fullscreen(false)
         .build()
         .unwrap();
 
@@ -95,12 +97,13 @@ fn main() {
         window_rect: Vector2::new(width, height),
     };
 
-    // You should be able to change this speed without ruining the simulation.
-    app.world_state.speed = 5.0;
+    // You can change these
+    app.world_state.speed = 2.0;
+    app.world_state.starve_time = 6; // In seconds
 
-    // Add 10 snakes.
+    // Add 10 snakes. with default length 2 and width 10, change these too.
     for _ in 0..10 {
-        let snake = snake::Snake::new(snake::random_within(app.window_rect), 2, 15.0);
+        let snake = snake::Snake::new(snake::random_within(app.window_rect), 2, 8.0);
         app.world_state.snakes.push(snake);
     }
 
