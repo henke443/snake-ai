@@ -2,10 +2,21 @@ use piston::input::RenderArgs;
 use opengl_graphics::GlGraphics;
 use graphics::*;
 use nalgebra::{Point2, Vector2};
+use geometry;
+use geometry::Circle;
 
 pub struct Food {
     pub radius: f64,
     pub origin: Point2<f64>,
+}
+
+impl Circle for Food {
+    fn origin(&self) -> Point2<f64> {
+        self.origin
+    }
+    fn radius(&self) -> f64 {
+        self.radius
+    }
 }
 
 impl Food {
@@ -25,5 +36,11 @@ impl Food {
         let (x, y) = (self.origin.x, self.origin.y);
         let transform = c.transform.trans(x - radius, y - radius);
         ellipse(food_color, square, transform, gl);
+    }
+
+
+    /// Create a new piece of food and spawn it within a window.
+    pub fn new_within(window: Vector2<u32>) -> Food {
+        Food::new(geometry::random_point_within(window), 10.0)
     }
 }

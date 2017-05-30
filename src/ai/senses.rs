@@ -13,7 +13,7 @@ pub fn get(snake: &Snake, world: &WorldState) -> Vec<f64> {
     get_vision(snake, world)
 }
 
-/// Needed for get_vision()
+/// Finds minimum value in a vector, neded for get_vision()
 fn min_val(vector: Vec<f64>) -> f64 {
     let mut min_val = vector[0];
 
@@ -53,11 +53,16 @@ fn get_vision(snake: &Snake, world: &WorldState) -> Vec<f64> {
     vision
 }
 
+
+/// Casts a single ray for a snake and return an array containing "vision values" for all seeable
+/// values. Vision values are 1 if the seen object is close, and -1 if it didn't see the object.
+/// Index 0 in the vision values is for food_hit and index 1 is for wall_hit.
 fn cast_ray(snake: &Snake,
             world: &WorldState,
             rotation: &f64,
             head_point: &Point2<f64>)
             -> [f64; 2] {
+
     // Get a point on a circle, in this case a point on a circle with radius 1.0
     // around our head origin rotated by the head rotation; aka our unit vector for the ray.
     let dir_x = head_point.x + 1.0 * rotation.cos(); // 1.0 being the radius
@@ -67,10 +72,10 @@ fn cast_ray(snake: &Snake,
     let ray_origin = Point2::new(head_point.x, head_point.y);
     let ray = Ray::new(ray_origin, ray_direction);
 
-    // Each ray makes 3 float values, for each visible object.
+    // Each ray makes 2 float values, for each visible object.
     // Rays can pass through objects so need to make a vector of hits and
     // then only use the one that is closest to to the snake.
-    //let mut snake_hits = Vec::new();
+    // let mut snake_hits = Vec::new();
     let mut food_hits = Vec::new();
     let mut wall_hit = -1.0f64; // Cant hit several walls so wont need to check.
 
@@ -82,9 +87,18 @@ fn cast_ray(snake: &Snake,
     // We need to move the windows origin to the center of the screen.
     let window_transform = Isometry2::new(Vector2::new(wr[0], wr[0]), 0.0);
 
+    // Check if the bounds of the window transformed by window_transform is hit by our ray.
+    // returns None if there was no hit or Some(toi) with a time of impact of the ray, less
+    // value meaning the object is closer to the window.
     if let Some(toi) = window.toi_with_ray(&window_transform, &ray, false) {
-        // false means non-solid cast.
-        wall_hit = 1.0 - toi as f64;
+        // False here means non-solid cast; basically math speak for a ray that can be cast from
+        // within a object.
+        wall_hit = 1.0 - (toi as f64 / 2.0);
+        if wall_hit > 1.0 {
+            wall_hit = 1.0;
+        } else if wall_hit < -1.0 {
+            wall_hit = -1.0;
+        }
     }
 
     for _snake in &world.snakes {
@@ -92,16 +106,16 @@ fn cast_ray(snake: &Snake,
         if _snake.parts[0].origin != snake.parts[0].origin {
             // ... that is not self
             for part in &_snake.parts {
-                // ... loop through each part of snake,
-                // ... and see if it colides with ray.
-                let ball = Ball::new(part.radius);
-                let ball_transform = Isometry2::new(Vector2::new(part.origin.x, part.origin.y),
-                                                    0.0);
-                // gets time of impact of ray to ball with transform ball_transform
-                // if ray doesn't hit ball, it returns None.
-                if let Some(toi) = ball.toi_with_ray(&ball_transform, &ray, true) {
-                    //snake_hits.push(toi);
-                    if part.is_food {
+                // ... loop through each part of snake, and see if it's food.
+                if part.is_food {
+                    // ... see if food colides with ray.
+                    let ball = Ball::new(part.radius); // Food is represented as a 2d ball.
+                    let ball_transform = Isometry2::new(Vector2::new(part.origin.x, part.origin.y),
+                                                        0.0);
+
+                    // Gets time of impact of ray to ball transformed by ball_transform.
+                    // If ray doesn't hit ball, it returns None.
+                    if let Some(toi) = ball.toi_with_ray(&ball_transform, &ray, true) {
                         food_hits.push(toi);
                     }
                 }
@@ -112,15 +126,22 @@ fn cast_ray(snake: &Snake,
     // Find smallest toi's in hits and use those,
     // preventing snake to have x-ray vision.
     // A value of 2.0 should be treated as -1, a value of 0 should be treated as 1
-    // let mut snake_hit = -1.0;
-    // if !snake_hits.is_empty() {
-    //     // if toi is 0, snake_hit is 1, if toi is 1, snake_hit is 0;
-    //     snake_hit = 1.0 - min_val(snake_hits);
-    // }
 
     let mut food_hit = -1.0;
+
+
+
     if !food_hits.is_empty() {
-        food_hit = 1.0 - min_val(food_hits);
+        //println!("wall_hit {}", wall_hit);
+
+        food_hit = 1.0 - min_val(food_hits) / 1.2;
+
+        if food_hit > 1.0 {
+            food_hit = 1.0;
+        } else if food_hit < -1.0 {
+            food_hit = -1.0;
+        }
+
     }
 
     [food_hit, wall_hit] //snake_hit]

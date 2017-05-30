@@ -24,7 +24,7 @@ pub struct NeuralNetwork {
 
 /// The layout of the neural can change and insert more or less hidden nodes but dont change
 /// the 48 and the 2 in the ends, these are input and output nodes.
-pub const NN_LAYOUT: [u32; 4] = [32, 16, 4, 2];
+pub const NN_LAYOUT: [u32; 4] = [32, 16, 16, 3];
 
 /// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
 pub struct DNA(Vec<f64>);
@@ -70,12 +70,6 @@ impl DNA {
         hash.0
     }
 
-    /// Returns a copy of the dna vector.
-    pub fn get(&self) -> Vec<f64> {
-        let v = &self.0;
-        v.to_vec()
-    }
-
     /// Converts the dna Vec<f64> to a longer Vec<u8> and returns it.
     pub fn get_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -89,31 +83,10 @@ impl DNA {
         bytes
     }
 
-    /// Creates DNA from bytes instead of Vec<f64> and returns it.
-    pub fn from_bytes(bytes: &[u8]) -> DNA {
-        let mut dna: DNA = DNA(Vec::new());
-
-        let mut i = 0;
-        while i < bytes.len() {
-
-            let mut byte_buffer = [0u8; 8];
-            for j in 0..8 {
-                byte_buffer[j] = bytes[i + j];
-            }
-
-            let mut float: f64 = unsafe { transmute(byte_buffer) };
-
-            if float != float {
-                // Float is NaN because of mutation
-                panic!("Float was NaN");
-            }
-
-            dna.push(float);
-
-            i += 8;
-        }
-
-        dna
+    /// Returns a copy of the dna vector.
+    pub fn get(&self) -> Vec<f64> {
+        let v = &self.0;
+        v.to_vec()
     }
 
     /// Gets color for dna based on the `get_hash()` function.
@@ -127,15 +100,12 @@ impl DNA {
         [r / 256.0, g / 256.0, b / 256.0, 1.0]
     }
 
-    pub fn set(&mut self, v: Vec<f64>) {
-        self.0 = v;
-    }
-
+    /// Instead of self.0.push(v), because it's ugly.
     pub fn push(&mut self, v: f64) {
         self.0.push(v);
     }
 
-    /// Unfinished.
+    /// "Unflattens" dna to a network, this was really mindboggling to create.
     pub fn to_network(&self) -> NN {
 
         let mut network = NN::new(&NN_LAYOUT);
@@ -177,23 +147,24 @@ impl DNA {
 /// let steering: f64 = get_steering(snake);
 /// // Steering is now in the range -1.0 to 1.0
 /// ```
-pub fn get_steering(snake: &Snake, world: &WorldState) -> f64 {
+/// #Panics
+/// Panics if steering is NaN, happened once so added it. Fixed so should never occur.
+pub fn get_steering(snake: &Snake, world: &WorldState) -> [f64; 2] {
 
     let senses = senses::get(snake, world);
 
     let results = snake.brain.run(&senses);
     let left = results[0];
     let right = results[1];
+    let speed = results[2];
 
     let steering: f64 = right - left; // Left is negative value right is positive
 
-    if format!("{}", steering) == "NaN" {
-        panic!("Steering was NaN\nleft:{}, right:{}\n senses: {:?}",
-               left,
-               right,
-               senses);
+    // This is only true if steering is nan
+    if steering != steering {
+        panic!("Steering was NaN");
     }
 
     //let steering: f64 = 0.5;
-    steering
+    [steering, speed]
 }

@@ -39,7 +39,7 @@ impl Default for WorldState {
             current_time: SteadyTime::now(),
             accumulator: 0.0,
             global_best_score: 0,
-            starve_time: 6,
+            starve_time: 4,
             foods: Vec::new(),
         }
     }
@@ -58,7 +58,7 @@ impl WorldState {
         }
 
         for i in 0..self.snakes.len() {
-            self.snakes[i].steer(100.0 * speed,
+            self.snakes[i].steer(100.0 * speed * inputs.snake_speed[i],
                                  4.0 * inputs.snake_steering[i] * speed,
                                  self.window_rect);
 
@@ -131,7 +131,7 @@ impl WorldState {
             println!("Global best: {}", self.global_best_score);
 
             // Random equation for mutate_rate and starve_time, can change this.
-            let mutate_rate = 1.0 / (1.0 + self.global_best_score as f32 * 5.0);
+            let mutate_rate = 1.0 / (100.0 + self.global_best_score as f32 * 1.0);
             self.starve_time = self.global_best_score + 1;
 
             let mut child =
