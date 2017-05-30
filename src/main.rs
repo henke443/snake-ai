@@ -24,7 +24,7 @@ use piston::event_loop::*; // Generic eventloop
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{GlGraphics, OpenGL};
-use nalgebra::{Vector2, Point2};
+use nalgebra::{Vector2};
 
 mod snake;
 mod state;
@@ -98,14 +98,15 @@ fn main() {
     };
 
     // You can change these
-    app.world_state.speed = 1.5;
-    app.world_state.starve_time = 3; // In seconds
-
-    // Add 10 snakes. with default length 2 and width 10, change these too.
+    app.world_state.speed = 3.0;
+    app.world_state.snake_length = 3;
     for _ in 0..15 {
-        let snake = snake::Snake::new(snake::random_within(app.window_rect), 2, 8.0);
+        let snake = snake::Snake::new(geometry::random_point_within(app.window_rect), 3, 10.0);
         app.world_state.snakes.push(snake);
     }
+
+    // Add 10 snakes. with default length 2 and width 10
+
 
     //default: .max_fps(60).ups(120)
     let mut events = Events::new(EventSettings::new()).max_fps(60).ups(120);

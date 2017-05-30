@@ -24,7 +24,7 @@ pub struct NeuralNetwork {
 
 /// The layout of the neural can change and insert more or less hidden nodes but dont change
 /// the 48 and the 2 in the ends, these are input and output nodes.
-pub const NN_LAYOUT: [u32; 3] = [32, 16, 2];
+pub const NN_LAYOUT: [u32; 4] = [32, 16, 4, 2];
 
 /// DNA is the weights of the neural networks flattened in a vector, used in the genetic algorithm.
 pub struct DNA(Vec<f64>);

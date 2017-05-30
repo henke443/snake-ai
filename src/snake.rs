@@ -8,14 +8,9 @@ use ai::DNA;
 use ai::nn::NN;
 use ai;
 use time::SteadyTime;
-use rand;
 use food::Food;
 use geometry::Circle;
 use geometry;
-//use rand::Rng;
-
-use rand::distributions::{IndependentSample, Range};
-
 
 pub struct Snake {
     pub alive: bool,
@@ -67,6 +62,20 @@ impl Part {
 }
 
 impl Snake {
+    pub fn is_outside(&self, window: Vector2<u32>) -> bool {
+        let radius = self.parts[0].radius;
+        let head = self.parts[0].origin;
+        let mut clamped = false;
+
+        if head.x - radius <= 1.0 || head.x + radius >= window[0] as f64 {
+            clamped = true;
+        } else if head.y - radius <= 1.0 || head.y + radius >= window[1] as f64 {
+            clamped = true;
+        }
+
+        clamped
+    }
+
     pub fn set_pos(&mut self, p: Point2<f64>) {
         for part in self.parts.iter_mut() {
             part.origin = Point2::new(p.x, p.y); //+ part.radius * (i as f64));
@@ -89,7 +98,7 @@ impl Snake {
 
         // Food as twice the radius. And this part which we add now is food because
         // it's the last part.
-        let radius = self.parts[last].radius * 2.0;
+        let radius = self.parts[last].radius * 3.0;
 
         self.parts
             .push(Part {
@@ -207,6 +216,12 @@ impl Snake {
         None
     }
 
+    pub fn set_length(&mut self, length: usize) {
+        while self.parts.len() < length {
+            self.add_part();
+        }
+    }
+
     #[allow(unused_variables)]
     pub fn render(&self, c: &context::Context, gl: &mut GlGraphics, args: &RenderArgs) {
         let parts = &self.parts;
@@ -220,7 +235,7 @@ impl Snake {
             // let mut rotation = -0.3 * std::f64::consts::PI;
             // let rot_inc = std::f64::consts::PI * 0.0375; //pi/16 * 0.6
             // for i in 0..16 {
-            //     let ray = [0.0, 0.0, 500.0, 2.0];
+            //     let ray = [0.0, 0.0, 300.0, 2.0];
             //     let ray_transform = c.transform
             //         .trans(parts[0].origin.x, parts[0].origin.y)
             //         .rot_rad(-parts[0].rotation + rotation);
@@ -254,14 +269,4 @@ impl Default for Snake {
     fn default() -> Snake {
         Snake::new(Point2::new(50.0, 50.0), 2, 50.0)
     }
-}
-
-/// Generates a random Point2<f64> within a window, or other Vector2<u32>
-pub fn random_within(window: Vector2<u32>) -> Point2<f64> {
-    let mut rng = rand::thread_rng();
-    let rx = Range::new(1.0, window[0] as f32 - 1.0);
-    let ry = Range::new(1.0, window[1] as f32 - 1.0);
-
-    Point2::new(rx.ind_sample(&mut rng) as f64,
-                ry.ind_sample(&mut rng) as f64)
 }

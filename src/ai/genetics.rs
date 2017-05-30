@@ -2,9 +2,10 @@ use snake::Snake;
 use rand;
 //use rand::Rng;
 use rand::distributions::{IndependentSample, Range};
-
+//use nalgebra::{Point2, Vector2};
 use ai::DNA;
-use nalgebra::Point2;
+use geometry;
+use geometry::Point2;
 
 //pub const MUTATE_RATE: f32 = 0.05;
 

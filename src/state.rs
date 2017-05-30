@@ -7,6 +7,7 @@ use input::Inputs;
 use input;
 use ai;
 use food::Food;
+use geometry;
 
 pub struct WorldState {
     pub snakes: Vec<Snake>,
@@ -17,6 +18,7 @@ pub struct WorldState {
     pub global_best_score: u32,
     pub starve_time: u32,
     pub foods: Vec<Food>,
+    pub snake_length: usize,
 
     // For the time-step (piston already has one but I layered this on top.)
     current_time: SteadyTime,
@@ -28,6 +30,7 @@ impl Default for WorldState {
     fn default() -> WorldState {
         WorldState {
             snakes: Vec::new(),
+            snake_length: 3,
             inputs: Inputs::default(),
             speed: 1.0,
             dt: 0.01,
@@ -48,25 +51,26 @@ impl WorldState {
 
         let speed = self.speed * self.dt;
 
-
         let mut to_kill = Vec::new();
 
         if self.snakes.len() < 2 {
             panic!("There's less than two snakes, can't breed!");
         }
 
-        // BUG something because of starve timer or something causes screen to be black.
-        // Replicate by making the window really small, seems to be when all snakes die at the same
-        // time or something.
-        // What happens if a snake is both starved and eaten at the same time?
         for i in 0..self.snakes.len() {
             self.snakes[i].steer(100.0 * speed,
-                                 2.0 * inputs.snake_steering[i] * speed,
+                                 4.0 * inputs.snake_steering[i] * speed,
                                  self.window_rect);
+
+            if self.snakes[i].is_outside(self.window_rect) {
+                to_kill.push(i);
+            }
 
             if let Some(eaten) = self.snakes[i].has_eaten(self) {
                 self.snakes[i].last_eaten = SteadyTime::now();
-                self.snakes[i].add_part();
+                for _ in 0..self.snake_length {
+                    self.snakes[i].add_part();
+                }
                 self.snakes[i].score += 1;
                 to_kill.push(eaten);
             }
@@ -79,9 +83,9 @@ impl WorldState {
             }
         }
 
-        // remove duplicates in to_kill
-        // to_kill.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        // to_kill.dedup();
+        // remove duplicates from to_kill
+        to_kill.sort_by(|a, b| a.cmp(b));
+        to_kill.dedup();
 
         for i in to_kill {
 
@@ -104,6 +108,20 @@ impl WorldState {
                 }
             }
 
+            // If the best snake has a score of 0, choose random snake.
+            if max == 0 {
+                use rand;
+                use rand::distributions::{IndependentSample, Range};
+                let mut rng = rand::thread_rng();
+                let range = Range::new(0, self.snakes.len() - 1);
+
+                best = range.ind_sample(&mut rng);
+                second_best = range.ind_sample(&mut rng);
+
+                //println!("Chose random snakes for breeding")
+            }
+
+            // If highscore...
             if max > self.global_best_score {
                 self.global_best_score = max;
             }
@@ -112,13 +130,15 @@ impl WorldState {
 
             println!("Global best: {}", self.global_best_score);
 
-            // Random equation for mutate_rate
-            let mutate_rate = 1.0 / (1.0 + max as f32 * 10.0);
+            // Random equation for mutate_rate and starve_time, can change this.
+            let mutate_rate = 1.0 / (1.0 + self.global_best_score as f32 * 5.0);
+            self.starve_time = self.global_best_score + 1;
 
             let mut child =
                 ai::genetics::breed(&self.snakes[best], &self.snakes[second_best], mutate_rate);
+            child.set_length(self.snake_length);
+            child.set_pos(geometry::random_point_within(self.window_rect));
 
-            child.set_pos(snake::random_within(self.window_rect));
             self.snakes.push(child);
         }
     }
