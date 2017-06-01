@@ -5,9 +5,10 @@ use ai::DNA;
 use geometry;
 use geometry::Point2;
 
-pub fn crossover(f1: Vec<f64>, f2: Vec<f64>) -> Vec<f64> {
-    let len = f1.len();
-    if len != f2.len() {
+#[allow(unused)]
+pub fn crossover(s1: &Snake, s2: &Snake) -> DNA {
+    let len = s1.dna.0.len();
+    if len != s1.dna.0.len() {
         panic!("Vectors didn't match in length!");
     }
 
@@ -17,19 +18,60 @@ pub fn crossover(f1: Vec<f64>, f2: Vec<f64>) -> Vec<f64> {
 
     let mut result = Vec::new();
     for i in 0..cut_pos {
-        result.push(f1[i]);
+        result.push(s1.dna.0[i]);
     }
 
     for i in cut_pos..len {
-        result.push(f2[i]);
+        result.push(s1.dna.0[i]);
     }
 
-    result
+    DNA(result)
+}
+
+/// A higher bias means score will be taken more into account when two snakes crossover.
+pub fn crossover_biased(s1: &Snake, s2: &Snake, bias: f32) -> DNA {
+
+    let len = s1.dna.0.len();
+    if len != s1.dna.0.len() {
+        panic!("Vectors didn't match in length!");
+    }
+
+    let between = Range::new(0, len - 1);
+    let mut rng = rand::thread_rng();
+    let mut cut_pos = between.ind_sample(&mut rng);
+
+    let addition = ((s1.score - s2.score) as f32 * bias * (len as f32)) as i32;
+    cut_pos = cut_pos + addition as usize;
+    println!("real cut_pos was: {}", cut_pos);
+
+    if cut_pos <= len {
+        println!("cut_pos <= len == true");
+    }
+    if cut_pos <= len || cut_pos >= len {
+
+        cut_pos = between.ind_sample(&mut rng);
+    }
+
+    println!("cut_pos was {} len was {} addition was {}",
+             cut_pos,
+             len,
+             addition);
+
+    let mut result = Vec::new();
+    for i in 0..cut_pos {
+        result.push(s1.dna.0[i]);
+    }
+
+    for i in cut_pos..len {
+        result.push(s2.dna.0[i]);
+    }
+
+    DNA(result)
 }
 
 /// Randomly changes weights in dna based on the mutate_rate.
 /// Lower mutate_rate means less mutations.
-pub fn mutate_dna(dna: &mut DNA, mutate_rate: f32) {
+pub fn mutate(dna: &mut DNA, mutate_rate: f32) {
 
     let mut rng = rand::thread_rng();
     let mut num_mutations = 0;
@@ -53,11 +95,10 @@ pub fn mutate_dna(dna: &mut DNA, mutate_rate: f32) {
 /// Less mutate_rate means less mutations in the offspring DNA.
 pub fn breed(s1: &Snake, s2: &Snake, mutate_rate: f32) -> Snake {
 
-    let f1 = s1.dna.get();
-    let f2 = s2.dna.get();
-    let mut dna = DNA(crossover(f1, f2));
+    //let mut dna = crossover(s1, s2);
+    let mut dna = crossover_biased(s1, s2, 0.01);
 
-    mutate_dna(&mut dna, mutate_rate);
+    mutate(&mut dna, mutate_rate);
 
     let mut snake = Snake::new(Point2::new(0.0, 0.0), 3, s1.parts[0].radius * 2.0);
 

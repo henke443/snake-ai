@@ -63,12 +63,13 @@ impl WorldState {
                                  self.window_rect);
 
             if self.snakes[i].is_outside(self.window_rect) {
-                to_kill.push(i);
+                //to_kill.push(i); // Can enable this to kill on wall hit
             }
 
             if let Some(eaten) = self.snakes[i].has_eaten(self) {
                 self.snakes[i].last_eaten = SteadyTime::now();
                 for _ in 0..self.snake_length {
+                    //self.snakes[eaten].parts.len() {
                     self.snakes[i].add_part();
                 }
                 self.snakes[i].score += 1;
