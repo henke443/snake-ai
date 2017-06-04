@@ -98,9 +98,9 @@ fn main() {
     };
 
     // You can change these
-    app.world_state.speed = 10.0;
+    app.world_state.speed = 20.0;
     app.world_state.snake_length = 3;
-    for _ in 0..4 {
+    for _ in 0..4 { // Try increasing this a lot and remove printlns.
         let snake = snake::Snake::new(geometry::random_point_within(app.window_rect), 3, 20.0);
         app.world_state.snakes.push(snake);
     }

@@ -16,7 +16,7 @@ pub struct WorldState {
     pub window_rect: Vector2<u32>,
     pub dt: f64,
     pub global_best_score: u32,
-    pub starve_time: u32,
+    pub starve_time: f64,
     pub foods: Vec<Food>,
     pub snake_length: usize,
 
@@ -39,7 +39,7 @@ impl Default for WorldState {
             current_time: SteadyTime::now(),
             accumulator: 0.0,
             global_best_score: 0,
-            starve_time: 4,
+            starve_time: 4.0,
             foods: Vec::new(),
         }
     }
@@ -77,7 +77,7 @@ impl WorldState {
             }
 
             let now = SteadyTime::now();
-            let time_since_eaten = (now - self.snakes[i].last_eaten).num_seconds();
+            let time_since_eaten = (now - self.snakes[i].last_eaten).num_milliseconds();
             if time_since_eaten > self.starve_time as i64 {
                 //println!("{} died of starvation", self.snakes[i].dna.get_hash());
                 to_kill.push(i);
@@ -133,7 +133,8 @@ impl WorldState {
 
             // Random equation for mutate_rate and starve_time, can change this.
             let mutate_rate = 1.0 / (100.0 + self.global_best_score as f32 * 1.0);
-            self.starve_time = self.global_best_score + 1;
+            // lowing the divisor here will increase starve_time.
+            self.starve_time = ((self.global_best_score + 1) as f64 / (self.speed * 0.0001));
 
             let mut child =
                 ai::genetics::breed(&self.snakes[best], &self.snakes[second_best], mutate_rate);

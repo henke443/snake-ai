@@ -40,15 +40,16 @@ pub fn crossover_biased(s1: &Snake, s2: &Snake, bias: f32) -> DNA {
     let mut rng = rand::thread_rng();
     let mut cut_pos = between.ind_sample(&mut rng);
 
-    let addition = ((s1.score - s2.score) as f32 * bias * (len as f32)) as i32;
+    let addition = (((s1.score as f32) - (s2.score as f32)) * bias * (len as f32)).round() as i32;
     cut_pos = cut_pos + addition as usize;
-    println!("real cut_pos was: {}", cut_pos);
 
-    if cut_pos <= len {
-        println!("cut_pos <= len == true");
+    println!("s1.score - s2.score = {}",
+             (s1.score as f32 - s2.score as f32));
+
+    if cut_pos <= 0 {
+        println!("cut_pos <= 0.0 == true");
     }
-    if cut_pos <= len || cut_pos >= len {
-
+    if cut_pos <= 0 || cut_pos >= len {
         cut_pos = between.ind_sample(&mut rng);
     }
 
@@ -96,7 +97,7 @@ pub fn mutate(dna: &mut DNA, mutate_rate: f32) {
 pub fn breed(s1: &Snake, s2: &Snake, mutate_rate: f32) -> Snake {
 
     //let mut dna = crossover(s1, s2);
-    let mut dna = crossover_biased(s1, s2, 0.01);
+    let mut dna = crossover_biased(s1, s2, 0.2);
 
     mutate(&mut dna, mutate_rate);
 
