@@ -1,4 +1,4 @@
-# Snake AI
+# Snake AI - Hello /g/ I made this 10 months ago
 Snakes with brains that learn by genetic algorithms to eat other snakes.
 Inspired by emgoz: https://www.youtube.com/watch?v=BBLJFYr7zB8
 
