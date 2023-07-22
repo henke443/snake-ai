@@ -10,6 +10,6 @@ feel free to download and look at it, just have rust installed and write
 
 ## TODO
 I will create another game which learns by NEAT instead, and I will write
-better more idiomatic rust with more tests and less absolute shiet.
+better more idiomatic rust with more tests
 
 Love rust so far.
